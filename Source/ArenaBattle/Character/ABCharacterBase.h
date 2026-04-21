@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Interface/ABAnimationAttackInterface.h"
 #include "ABCharacterBase.generated.h"
-
 
 UENUM()
 enum class ECharacterControlType : uint8
@@ -15,7 +15,8 @@ enum class ECharacterControlType : uint8
 };
 
 UCLASS()
-class ARENABATTLE_API AABCharacterBase : public ACharacter
+class ARENABATTLE_API AABCharacterBase
+	: public ACharacter, public IABAnimationAttackInterface
 {
 	GENERATED_BODY()
 
@@ -23,6 +24,18 @@ public:
 	// Sets default values for this character's properties
 	AABCharacterBase();
 
+	// IABAnimationAttackInterface을(를) 통해 상속됨
+	virtual void AttackHitCheck() override;
+
+	virtual float TakeDamage(
+		float DamageAmount,
+		struct FDamageEvent const& DamageEvent,
+		class AController* EventInstigator,
+		AActor* DamageCauser) override;
+
+protected:
+	virtual void SetDead();
+	void PlayDeadAnimation();
 protected:
 	virtual void SetCharacterControlData(const class UABCharacterControlData* InCharacterControlData);
 
@@ -50,4 +63,5 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Category = Attack)
 	bool bHasNextComboCommand = false;
+
 };

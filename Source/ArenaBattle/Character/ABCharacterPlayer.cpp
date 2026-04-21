@@ -20,20 +20,20 @@ AABCharacterPlayer::AABCharacterPlayer()
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
 	GetCharacterMovement()->JumpZVelocity = 800.0f;
 
-	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f), FRotator(0.0f, -90.0f, 0.0f));
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> CharacMesh(
-		TEXT("/Game/InfinityBladeWarriors/Character/CompleteCharacters/SK_CharM_Cardboard.SK_CharM_Cardboard")
-	);
-
-	if (CharacMesh.Succeeded())
-		GetMesh()->SetSkeletalMesh(CharacMesh.Object);
-
-	static ConstructorHelpers::FClassFinder<UAnimInstance> CharacterAnim(
-		TEXT("/Game/ArenaBattle/Animation/ABP_ABCharacter.ABP_ABCharacter_C")
-	);
-
-	if (CharacterAnim.Succeeded())
-		GetMesh()->SetAnimInstanceClass(CharacterAnim.Class);
+	//GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f), FRotator(0.0f, -90.0f, 0.0f));
+	//static ConstructorHelpers::FObjectFinder<USkeletalMesh> CharacMesh(
+	//	TEXT("/Game/InfinityBladeWarriors/Character/CompleteCharacters/SK_CharM_Cardboard.SK_CharM_Cardboard")
+	//);
+	//
+	//if (CharacMesh.Succeeded())
+	//	GetMesh()->SetSkeletalMesh(CharacMesh.Object);
+	//
+	//static ConstructorHelpers::FClassFinder<UAnimInstance> CharacterAnim(
+	//	TEXT("/Game/ArenaBattle/Animation/ABP_ABCharacter.ABP_ABCharacter_C")
+	//);
+	//
+	//if (CharacterAnim.Succeeded())
+	//	GetMesh()->SetAnimInstanceClass(CharacterAnim.Class);
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
@@ -167,17 +167,7 @@ void AABCharacterPlayer::QuarterMove(const FInputActionValue& Value)
 
 void AABCharacterPlayer::Attack()
 {
-	//UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	//if (AnimInstance)
-	//{
-	//	const float AttackSpeedRate = 1.0f;
-	//	AnimInstance->Montage_Play(ComboAttackMontage);
-	//
-	//	FOnMontageEnded OnMontageEnded;
-	//	OnMontageEnded.BindUObject(this, &AABCharacterPlayer::ComboActionEnd);
-	//	AnimInstance->Montage_SetEndDelegate(OnMontageEnded, ComboAttackMontage);
-	//	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
-	//}
+	ProcessComboCommand();
 }
 
 void AABCharacterPlayer::ChangeCharacterControl()
