@@ -9,6 +9,10 @@
 #include "Physics/ABCollision.h"
 #include "Engine/DamageEvents.h"
 
+#include "CharacterStat/ABCharacterStatComponent.h"
+#include "UI/ABWidgetComponent.h"
+#include "UI/ABHpBarWidget.h"
+
 // Sets default values
 AABCharacterBase::AABCharacterBase()
 {
@@ -57,6 +61,33 @@ AABCharacterBase::AABCharacterBase()
 	{
 		ComboActionData = ComboActionDataRef.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> DeadMontageRef(TEXT("/Game/ArenaBattle/Animation/AM_Dead.AM_Dead"));
+	if (DeadMontageRef.Succeeded())
+	{
+		DeadMontage = DeadMontageRef.Object;
+	}
+
+	Stat = CreateDefaultSubobject<UABCharacterStatComponent>(TEXT("Stat"));
+	HpBar = CreateDefaultSubobject<UABWidgetComponent>(TEXT("Widget"));
+
+	if (!Stat || !HpBar)
+		return;
+
+	HpBar->SetupAttachment(GetMesh());
+	HpBar->SetRelativeLocation(FVector(0.0f, 0.0f, 180.0f));
+
+	static ConstructorHelpers::FClassFinder<UUserWidget> HpBarWidgetRef(
+		TEXT("/Game/ArenaBattle/UI/WBP_HpBar.WBP_HpBar_C")
+	);
+
+	if (HpBarWidgetRef.Succeeded())
+	{
+		HpBar->SetWidgetClass(HpBarWidgetRef.Class);
+		HpBar->SetWidgetSpace(EWidgetSpace::Screen);
+		HpBar->SetDrawSize(FVector2D(150.0f, 15.0f));
+		HpBar->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
 }
 
 void AABCharacterBase::SetCharacterControlData(const UABCharacterControlData* InCharacterControlData)
@@ -70,9 +101,12 @@ void AABCharacterBase::SetCharacterControlData(const UABCharacterControlData* In
 
 void AABCharacterBase::ProcessComboCommand()
 {
+	UE_LOG(LogTemp, Log, TEXT("ProcessComboCommand"));
+
 	if (CurrentCombo == 0)
 	{
 		ComboActionBegin();
+		return;
 	}
 
 	if (ComboTimerHandle.IsValid())
@@ -157,6 +191,23 @@ void AABCharacterBase::ComboCheck()
 	bHasNextComboCommand = false;
 }
 
+void AABCharacterBase::SetUpCharacterWidget(UABUserWidget* InUserWidget)
+{
+	UABHpBarWidget* HpBarWidget = Cast<UABHpBarWidget>(InUserWidget);
+	if (!HpBarWidget)
+		return;
+
+	HpBarWidget->SetMaxHp(Stat->GetMaxHp());
+	HpBarWidget->UpdateHpBar(Stat->GetCurrentHp());
+	Stat->OnHpChanged.AddUObject(HpBarWidget, &UABHpBarWidget::UpdateHpBar);
+}
+
+void AABCharacterBase::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	Stat->OnHpZero.AddUObject(this, &AABCharacterBase::SetDead);
+}
+
 void AABCharacterBase::AttackHitCheck()
 {
 	const float AttackRange = 200.0f;
@@ -205,15 +256,27 @@ float AABCharacterBase::TakeDamage(
 	AActor* DamageCauser)
 {
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-	SetDead();
+	//SetDead();
+	Stat->ApplyDamage(DamageAmount);
 	return DamageAmount;
 }
 
 void AABCharacterBase::SetDead()
 {
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+	PlayDeadAnimation();
+	SetActorEnableCollision(false);
+	HpBar->SetHiddenInGame(true);
 }
 
 void AABCharacterBase::PlayDeadAnimation()
 {
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (!AnimInstance)
+		return;
+
+	AnimInstance->StopAllMontages(0.0f);
+	const float DeadSpeedRate = 1.0f;
+	AnimInstance->Montage_Play(DeadMontage, DeadSpeedRate);
 }
 
