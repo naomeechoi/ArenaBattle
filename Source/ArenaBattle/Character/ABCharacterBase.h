@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Interface/ABAnimationAttackInterface.h"
 #include "Interface/ABCharacterWidgetInterface.h"
+#include "Interface/ABCharacterItemInterface.h"
 #include "ABCharacterBase.generated.h"
 
 UENUM()
@@ -14,10 +15,12 @@ enum class ECharacterControlType : uint8
 	Shoulder,
 	Quarter,
 };
+DECLARE_DELEGATE_OneParam(FOnTakeItemDelegate, class UABItemData*)
 
 UCLASS()
 class ARENABATTLE_API AABCharacterBase
-	: public ACharacter, public IABAnimationAttackInterface, public IABCharacterWidgetInterface
+	: public ACharacter,
+	public IABAnimationAttackInterface, public IABCharacterWidgetInterface, public IABCharacterItemInterface
 {
 	GENERATED_BODY()
 
@@ -46,6 +49,12 @@ protected:
 	void ComboActionEnd(UAnimMontage* TargetMontage, bool bInterrupted);
 	void SetComboChcekTimer();
 	void ComboCheck();
+	
+	// IABCharacterItemInterface을(를) 통해 상속됨
+	virtual void TakeItem(UABItemData* InItemData) override;
+	virtual void DrinkPotion(UABItemData* InItemData);
+	virtual void EquipWeapon(UABItemData* InItemData);
+	virtual void ReadScroll(UABItemData* InItemData);
 
 	// from IABCharacterWidgetInterface 
 	virtual void SetUpCharacterWidget(UABUserWidget* InUserWidget) override;
@@ -83,5 +92,11 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Widget)
 	TObjectPtr<class UABWidgetComponent> HpBar;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Equipment)
+	TObjectPtr<class USkeletalMeshComponent> Weapon;
+
+protected:
+	TArray<FOnTakeItemDelegate> TakeItemActions;
 
 };

@@ -13,6 +13,9 @@
 #include "UI/ABWidgetComponent.h"
 #include "UI/ABHpBarWidget.h"
 
+#include "Item/ABItemData.h"
+#include "Item/ABWeaponItemData.h"
+
 // Sets default values
 AABCharacterBase::AABCharacterBase()
 {
@@ -70,8 +73,9 @@ AABCharacterBase::AABCharacterBase()
 
 	Stat = CreateDefaultSubobject<UABCharacterStatComponent>(TEXT("Stat"));
 	HpBar = CreateDefaultSubobject<UABWidgetComponent>(TEXT("Widget"));
+	Weapon = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Weapon"));
 
-	if (!Stat || !HpBar)
+	if (!Stat || !HpBar || !Weapon)
 		return;
 
 	HpBar->SetupAttachment(GetMesh());
@@ -88,6 +92,12 @@ AABCharacterBase::AABCharacterBase()
 		HpBar->SetDrawSize(FVector2D(150.0f, 15.0f));
 		HpBar->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
+
+	TakeItemActions.Add(FOnTakeItemDelegate::CreateUObject(this, &AABCharacterBase::EquipWeapon));
+	TakeItemActions.Add(FOnTakeItemDelegate::CreateUObject(this, &AABCharacterBase::DrinkPotion));
+	TakeItemActions.Add(FOnTakeItemDelegate::CreateUObject(this, &AABCharacterBase::ReadScroll));
+
+	Weapon->SetupAttachment(GetMesh(), TEXT("hand_rSocket"));
 }
 
 void AABCharacterBase::SetCharacterControlData(const UABCharacterControlData* InCharacterControlData)
@@ -206,6 +216,34 @@ void AABCharacterBase::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 	Stat->OnHpZero.AddUObject(this, &AABCharacterBase::SetDead);
+}
+
+void AABCharacterBase::TakeItem(UABItemData* InItemData)
+{
+	if (!InItemData)
+		return;
+
+	TakeItemActions[(uint8)InItemData->Type].ExecuteIfBound(InItemData);
+}
+
+void AABCharacterBase::DrinkPotion(UABItemData* InItemData)
+{
+}
+
+void AABCharacterBase::EquipWeapon(UABItemData* InItemData)
+{
+	UABWeaponItemData* WeaponItemData = Cast<UABWeaponItemData>(InItemData);
+	if (WeaponItemData)
+	{
+		if (WeaponItemData->WeaponMesh.IsPending())
+			WeaponItemData->WeaponMesh.LoadSynchronous();
+			
+		Weapon->SetSkeletalMesh(WeaponItemData->WeaponMesh.Get());
+	}
+}
+
+void AABCharacterBase::ReadScroll(UABItemData* InItemData)
+{
 }
 
 void AABCharacterBase::AttackHitCheck()
