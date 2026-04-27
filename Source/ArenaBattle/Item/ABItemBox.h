@@ -15,6 +15,11 @@ public:
 	// Sets default values for this actor's properties
 	AABItemBox();
 
+	FORCEINLINE class UBoxComponent* GetTrigger() { return Trigger; }
+
+protected:
+	virtual void PostInitializeComponents() override;
+
 protected:
 	UFUNCTION()
 	void OnOverlapBegin(

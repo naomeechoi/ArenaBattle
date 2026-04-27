@@ -99,4 +99,8 @@ protected:
 protected:
 	TArray<FOnTakeItemDelegate> TakeItemActions;
 
+public:
+	int32 GetLevel() const;
+	void SetLevel(int32 InNewLevel);
+
 };

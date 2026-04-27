@@ -8,6 +8,7 @@
 #include "Physics/ABCollision.h"
 #include "Interface/ABCharacterItemInterface.h"
 #include "ABItemData.h"
+#include "Engine/AssetManager.h"
 
 // Sets default values
 AABItemBox::AABItemBox()
@@ -34,9 +35,9 @@ AABItemBox::AABItemBox()
 	Effect->SetupAttachment(Trigger);
 
 	// 콜리전 프로필 설정.
-	Trigger->SetCollisionProfileName(CPROFILE_ABTRIGGER);
-	Trigger->SetBoxExtent(FVector(40.0f, 42.0f, 30.0f));
-	Trigger->OnComponentBeginOverlap.AddDynamic(this, &AABItemBox::OnOverlapBegin);
+	//Trigger->SetCollisionProfileName(CPROFILE_ABTRIGGER);
+	//Trigger->SetBoxExtent(FVector(40.0f, 42.0f, 30.0f));
+	//Trigger->OnComponentBeginOverlap.AddDynamic(this, &AABItemBox::OnOverlapBegin);
 
 	// 애셋 로드 (메시).
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> BoxMeshRef(
@@ -62,6 +63,30 @@ AABItemBox::AABItemBox()
 		// 바로 재생되지 않도록 설정.
 		Effect->bAutoActivate = false;
 	}
+}
+
+void AABItemBox::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	UAssetManager& Manager = UAssetManager::Get();
+
+	TArray<FPrimaryAssetId> Assets;
+	Manager.GetPrimaryAssetIdList("ABItemData", Assets);
+	if (Assets.Num() <= 0)
+		return;
+
+	int32 RandomIndex = FMath::RandRange(0, Assets.Num() - 1);
+	FSoftObjectPtr AssetPtr(Manager.GetPrimaryAssetPath(Assets[RandomIndex]));
+
+	if (AssetPtr.IsPending())
+		AssetPtr.LoadSynchronous();
+
+	Item = Cast<UABItemData>(AssetPtr.Get());
+	ensureAlways(Item);
+
+	Trigger->SetCollisionProfileName(CPROFILE_ABTRIGGER);
+	Trigger->SetBoxExtent(FVector(40.0f, 42.0f, 30.0f));
+	Trigger->OnComponentBeginOverlap.AddDynamic(this, &AABItemBox::OnOverlapBegin);
 }
 
 void AABItemBox::OnOverlapBegin(

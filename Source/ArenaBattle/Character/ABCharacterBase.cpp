@@ -137,7 +137,7 @@ void AABCharacterBase::ComboActionBegin()
 	if(!AnimInstance)
 		return;
 
-	const float AttackSpeedRate = 1.0f;
+	const float AttackSpeedRate = Stat->GetTotalStat().AttackSpeed;
 	AnimInstance->Montage_Play(ComboAttackMontage, AttackSpeedRate);
 
 	FOnMontageEnded OnMontageEnded;
@@ -166,7 +166,7 @@ void AABCharacterBase::SetComboChcekTimer()
 
 	ensureAlways(ComboActionData->EffectiveFrameCount.IsValidIndex(ComboIndex));
 
-	const float AttackSpeedRate = 1.0f;
+	const float AttackSpeedRate = Stat->GetTotalStat().AttackSpeed;
 
 	float ComboEffectTime = (ComboActionData->EffectiveFrameCount[ComboIndex] / ComboActionData->FrameRate) / AttackSpeedRate;
 
@@ -207,7 +207,7 @@ void AABCharacterBase::SetUpCharacterWidget(UABUserWidget* InUserWidget)
 	if (!HpBarWidget)
 		return;
 
-	HpBarWidget->SetMaxHp(Stat->GetMaxHp());
+	HpBarWidget->SetMaxHp(Stat->GetTotalStat().MaxHp);
 	HpBarWidget->UpdateHpBar(Stat->GetCurrentHp());
 	Stat->OnHpChanged.AddUObject(HpBarWidget, &UABHpBarWidget::UpdateHpBar);
 }
@@ -239,6 +239,8 @@ void AABCharacterBase::EquipWeapon(UABItemData* InItemData)
 			WeaponItemData->WeaponMesh.LoadSynchronous();
 			
 		Weapon->SetSkeletalMesh(WeaponItemData->WeaponMesh.Get());
+
+		Stat->SetModifierStat(WeaponItemData->ModifierStat);
 	}
 }
 
@@ -248,8 +250,8 @@ void AABCharacterBase::ReadScroll(UABItemData* InItemData)
 
 void AABCharacterBase::AttackHitCheck()
 {
-	const float AttackRange = 200.0f;
-	const float AttackRadius = 30.0f;
+	const float AttackRange = Stat->GetTotalStat().AttackRange;
+	const float AttackRadius = 50.0f;
 	FCollisionQueryParams Params(
 		SCENE_QUERY_STAT(Attack),
 		false,
@@ -264,7 +266,7 @@ void AABCharacterBase::AttackHitCheck()
 
 	if (HitDetected)
 	{
-		const float AttackDamage = 30.0f;
+		const float AttackDamage = Stat->GetTotalStat().Attack;
 		FDamageEvent DamageEvent;
 		OutHitResult.GetActor()->TakeDamage(AttackDamage, DamageEvent, GetController(), this);
 	}
@@ -318,3 +320,13 @@ void AABCharacterBase::PlayDeadAnimation()
 	AnimInstance->Montage_Play(DeadMontage, DeadSpeedRate);
 }
 
+
+int32 AABCharacterBase::GetLevel() const
+{
+	return Stat->GetCurrentLevel();
+}
+
+void AABCharacterBase::SetLevel(int32 InNewLevel)
+{
+	Stat->SetLevelStat(InNewLevel);
+}

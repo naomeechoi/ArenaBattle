@@ -26,6 +26,9 @@ public:
 	// Sets default values for this actor's properties
 	AABStageGimmick();
 
+	FORCEINLINE int32 GetStageNum() const { return CurrentStageNum; }
+	FORCEINLINE void SetStageNum(int32 NewStageNum) { CurrentStageNum = NewStageNum;}
+
 protected:
 	virtual void OnConstruction(const FTransform& Transform) override;
 
@@ -113,4 +116,8 @@ protected:
 	);
 
 	void SpawnRewardBoxes();
+
+protected:
+	UPROPERTY(VisibleInstanceOnly, Category = Stat)
+	int32 CurrentStageNum;
 };
