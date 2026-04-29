@@ -251,7 +251,7 @@ void AABCharacterBase::ReadScroll(UABItemData* InItemData)
 void AABCharacterBase::AttackHitCheck()
 {
 	const float AttackRange = Stat->GetTotalStat().AttackRange;
-	const float AttackRadius = 50.0f;
+	const float AttackRadius = Stat->GetAttackRadius();
 	FCollisionQueryParams Params(
 		SCENE_QUERY_STAT(Attack),
 		false,
